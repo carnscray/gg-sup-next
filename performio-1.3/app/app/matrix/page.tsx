@@ -1,21 +1,25 @@
 import MatrixFilterBar from "./components/matrix-filter-bar";
-import MatrixTable from "./components/matrix-table";
-import { fetchMatrixKPIs } from "./actions/fetch-matrix-kpis";
+import MatrixView from "./components/matrix-view";
+import { fetchMatrixKPIs, fetchFilterOptions } from "./actions/fetch-matrix-kpis";
 
 export default async function MatrixPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-    // 1. Await the searchParams promise (Next.js 15 requirement)
+    // 1. Await the searchParams promise
     const resolvedSearchParams = await searchParams;
 
-    // 2. Grab dates from the URL
-    const from = typeof resolvedSearchParams.from === 'string' ? resolvedSearchParams.from : undefined;
-    const to = typeof resolvedSearchParams.to === 'string' ? resolvedSearchParams.to : undefined;
+    // 2. Extract filters from URL
+    const week = typeof resolvedSearchParams.week === 'string' ? parseInt(resolvedSearchParams.week) : 18; // Default to week 18 (May 2026)
+    const prac = typeof resolvedSearchParams.prac === 'string' ? resolvedSearchParams.prac : undefined;
+    const loc = typeof resolvedSearchParams.loc === 'string' ? resolvedSearchParams.loc : undefined;
 
-    // 3. Fetch the data based on dates
-    const { success, data, error } = await fetchMatrixKPIs(from, to);
+    // 3. Fetch data and options
+    const [{ success, data, error }, options] = await Promise.all([
+        fetchMatrixKPIs(prac === 'all' ? undefined : prac, loc === 'all' ? undefined : loc, week),
+        fetchFilterOptions()
+    ]);
 
     return (
         <div className="space-y-4">
@@ -24,7 +28,7 @@ export default async function MatrixPage({
                 <p className="text-muted-foreground">Performance metrics by practitioner.</p>
             </div>
 
-            <MatrixFilterBar />
+            <MatrixFilterBar options={options} />
 
             {error && (
                 <div className="text-destructive mb-4 font-medium p-4 border border-destructive rounded-lg bg-destructive/10">
@@ -32,8 +36,8 @@ export default async function MatrixPage({
                 </div>
             )}
 
-            {/* 4. Render the table */}
-            {success && <MatrixTable data={data || []} />}
+            {/* 4. Render the new Matrix View */}
+            {success && data && <MatrixView data={data} />}
         </div>
     );
 }
