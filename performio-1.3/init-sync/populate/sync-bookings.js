@@ -20,7 +20,7 @@ async function syncEndpoint(urlPath, typeLabel) {
             const transformed = records.map(b => ({
                 id: parseClinikoId(b.links.self),
                 clinic_id: CLINIC_ID,
-                location_id: b.business ? parseClinikoId(b.business.links.self) : null, // Added Location ID
+                location_id: b.business ? parseClinikoId(b.business.links.self) : null,
                 prac_id: b.practitioner ? parseClinikoId(b.practitioner.links.self) : null,
                 patient_id: b.patient ? parseClinikoId(b.patient.links.self) : null,
                 apptype_id: b.appointment_type ? parseClinikoId(b.appointment_type.links.self) : null,
@@ -28,8 +28,10 @@ async function syncEndpoint(urlPath, typeLabel) {
                 // Core Dates
                 booking_starts_at: b.starts_at,
                 booking_ends_at: b.ends_at,
+                created_at: b.created_at || null,
                 updated_at: b.updated_at,
                 deleted_at: b.deleted_at || null,
+                archived_at: b.archived_at || null,
 
                 // Status & Attendance
                 booking_type: typeLabel.toLowerCase().split(' ')[0],
@@ -44,7 +46,25 @@ async function syncEndpoint(urlPath, typeLabel) {
                 // Cancellations
                 booking_cancelled_at: b.cancelled_at || null,
                 cancellation_reason_id: b.cancellation_reason ? String(b.cancellation_reason) : null,
+                cancellation_reason: b.cancellation_reason ? String(b.cancellation_reason) : null,
                 cancellation_reason_desc: b.cancellation_reason_description || null,
+                cancellation_note: b.cancellation_note || null,
+
+                // --- NEWLY ADDED COLUMNS ---
+                booking_ip_address: b.booking_ip_address || null,
+                email_reminder_sent: b.email_reminder_sent || false,
+                sms_reminder_sent: b.sms_reminder_sent || false,
+                has_patient_appointment_notes: b.has_patient_appointment_notes || false,
+                notes: b.notes || null,
+                online_booking_policy_accepted: b.online_booking_policy_accepted || null,
+                patient_name: b.patient_name || null,
+                repeat_rule: b.repeat_rule || null,
+
+                // THE FIX: If b.repeats is an object, make it 'true', otherwise 'false'
+                repeats: b.repeats ? true : false,
+
+                telehealth_url: b.telehealth_url || null,
+                // ---------------------------
 
                 // JSON Data
                 booking_unavailable_block_type: b.unavailable_block_type || null,
